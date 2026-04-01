@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Consultor Financeiro Local</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero card">
+        <div>
+          <p class="eyebrow">IA local + revisão humana</p>
+          <h1>Consultor Financeiro Local</h1>
+          <p class="lead">
+            O sistema tenta interpretar seus lançamentos com IA local. Se a IA não estiver disponível,
+            cai automaticamente para o parser por regras. Em ambos os casos, a revisão manual continua no controle.
+          </p>
+        </div>
+      </section>
+
+      <section class="card">
+        <form id="entry-form" class="entry-form">
+          <label class="field">
+            <span>Mensagem</span>
+            <textarea
+              id="message-text"
+              name="message_text"
+              rows="7"
+              placeholder="Ex.: mercado 182,40 no cartão de débito hoje; paguei escola 950; recebi 2.500 de salário."
+            ></textarea>
+          </label>
+
+          <div class="field">
+            <span>Áudio</span>
+            <div class="audio-controls">
+              <button type="button" id="start-recording">Iniciar gravação</button>
+              <button type="button" id="stop-recording" disabled>Parar</button>
+              <span id="recording-status">Nenhuma gravação em andamento.</span>
+            </div>
+            <audio id="audio-preview" controls class="hidden"></audio>
+          </div>
+
+          <label class="field">
+            <span>Arquivos</span>
+            <input
+              id="file-input"
+              type="file"
+              name="files"
+              multiple
+              accept="image/*,.pdf,audio/*"
+            />
+            <small>
+              Formatos aceitos: imagem, PDF e áudio. Por enquanto, a interpretação automática segue focada em texto.
+            </small>
+          </label>
+
+          <div class="attachments">
+            <p>Anexos prontos para envio</p>
+            <ul id="attachments-list">
+              <li>Nenhum arquivo selecionado.</li>
+            </ul>
+          </div>
+
+          <div class="actions">
+            <button type="submit" id="submit-button">Interpretar entrada</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="review-section" class="card hidden">
+        <h2>Revise antes de salvar</h2>
+        <p class="lead compact">
+          Esta leitura pode ter vindo da IA local ou do parser por regras. Ajuste o que for necessário e confirme só quando estiver certo.
+        </p>
+
+        <form id="review-form" class="review-form">
+          <input type="hidden" id="review-submission-id" />
+          <input type="hidden" id="review-captured-at" />
+          <input type="hidden" id="review-raw-text" />
+          <input type="hidden" id="review-confidence" />
+
+          <div class="review-grid">
+            <label class="field">
+              <span>Tipo</span>
+              <select id="review-entry-type">
+                <option value="despesa">Despesa</option>
+                <option value="receita">Receita</option>
+                <option value="indefinido">Indefinido</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Valor</span>
+              <input id="review-amount" type="number" step="0.01" min="0" />
+            </label>
+
+            <label class="field">
+              <span>Data</span>
+              <input id="review-occurred-on" type="date" />
+            </label>
+
+            <label class="field">
+              <span>Categoria</span>
+              <input id="review-category" type="text" />
+            </label>
+
+            <label class="field">
+              <span>Subcategoria</span>
+              <input id="review-subcategory" type="text" />
+            </label>
+
+            <label class="field">
+              <span>Pagamento</span>
+              <select id="review-payment-method">
+                <option value="">Não identificado</option>
+                <option value="credito">Crédito</option>
+                <option value="debito">Débito</option>
+                <option value="pix">Pix</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="boleto">Boleto</option>
+                <option value="transferencia">Transferência</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Descrição</span>
+            <textarea id="review-description" rows="4"></textarea>
+          </label>
+
+          <div class="review-actions">
+            <button type="button" id="cancel-review" class="button-secondary">Cancelar</button>
+            <button type="submit" id="confirm-button">Confirmar e salvar</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <div>
+            <h2>Histórico</h2>
+            <p class="lead compact">Consulte, filtre e ajuste os lançamentos já confirmados.</p>
+          </div>
+        </div>
+
+        <form id="history-filter-form" class="history-filter-form">
+          <label class="field">
+            <span>Data inicial</span>
+            <input id="filter-start-date" type="date" />
+          </label>
+
+          <label class="field">
+            <span>Data final</span>
+            <input id="filter-end-date" type="date" />
+          </label>
+
+          <label class="field">
+            <span>Tipo</span>
+            <select id="filter-entry-type">
+              <option value="">Todos</option>
+              <option value="despesa">Despesa</option>
+              <option value="receita">Receita</option>
+              <option value="indefinido">Indefinido</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Categoria</span>
+            <input id="filter-category" type="text" placeholder="Ex.: alimentacao" />
+          </label>
+
+          <label class="field">
+            <span>Status</span>
+            <select id="filter-status">
+              <option value="">Ativos</option>
+              <option value="confirmed">Confirmados</option>
+              <option value="cancelled">Cancelados</option>
+              <option value="all">Todos</option>
+            </select>
+          </label>
+
+          <div class="filter-actions">
+            <button type="submit">Aplicar filtros</button>
+            <button type="button" id="clear-filters" class="button-secondary">Limpar</button>
+          </div>
+        </form>
+
+        <div class="summary-grid">
+          <article class="summary-card">
+            <span>Receitas</span>
+            <strong id="summary-receitas">R$ 0,00</strong>
+          </article>
+          <article class="summary-card">
+            <span>Despesas</span>
+            <strong id="summary-despesas">R$ 0,00</strong>
+          </article>
+          <article class="summary-card">
+            <span>Saldo</span>
+            <strong id="summary-saldo">R$ 0,00</strong>
+          </article>
+          <article class="summary-card">
+            <span>Registros</span>
+            <strong id="summary-total">0</strong>
+          </article>
+        </div>
+
+        <div class="table-wrap">
+          <table class="entries-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Categoria</th>
+                <th>Descrição</th>
+                <th>Pagamento</th>
+                <th>Valor</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="entries-table-body">
+              <tr>
+                <td colspan="8" class="empty-state">Nenhum lançamento encontrado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="edit-section" class="card hidden">
+        <h2>Editar lançamento</h2>
+        <p class="lead compact">Ajuste o lançamento salvo e atualize o histórico.</p>
+
+        <form id="edit-form" class="review-form">
+          <input type="hidden" id="edit-entry-id" />
+          <input type="hidden" id="edit-submission-id" />
+          <input type="hidden" id="edit-captured-at" />
+          <input type="hidden" id="edit-raw-text" />
+          <input type="hidden" id="edit-confidence" />
+
+          <div class="review-grid">
+            <label class="field">
+              <span>Tipo</span>
+              <select id="edit-entry-type">
+                <option value="despesa">Despesa</option>
+                <option value="receita">Receita</option>
+                <option value="indefinido">Indefinido</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Valor</span>
+              <input id="edit-amount" type="number" step="0.01" min="0" />
+            </label>
+
+            <label class="field">
+              <span>Data</span>
+              <input id="edit-occurred-on" type="date" />
+            </label>
+
+            <label class="field">
+              <span>Categoria</span>
+              <input id="edit-category" type="text" />
+            </label>
+
+            <label class="field">
+              <span>Subcategoria</span>
+              <input id="edit-subcategory" type="text" />
+            </label>
+
+            <label class="field">
+              <span>Pagamento</span>
+              <select id="edit-payment-method">
+                <option value="">Não identificado</option>
+                <option value="credito">Crédito</option>
+                <option value="debito">Débito</option>
+                <option value="pix">Pix</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="boleto">Boleto</option>
+                <option value="transferencia">Transferência</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Descrição</span>
+            <textarea id="edit-description" rows="4"></textarea>
+          </label>
+
+          <div class="review-actions">
+            <button type="button" id="cancel-edit" class="button-secondary">Cancelar edição</button>
+            <button type="submit" id="save-edit-button">Salvar alterações</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="feedback" class="feedback hidden"></section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

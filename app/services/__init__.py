@@ -1,1 +1,1 @@
-"""Serviços auxiliares do consultor financeiro local."""
+"""Serviços da aplicação."""

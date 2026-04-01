@@ -1,1 +1,1 @@
-"""Aplicação base do consultor financeiro local."""
+"""Consultor Financeiro Local."""
